@@ -19,15 +19,30 @@
  * limitations under the License.
  */
 
-#ifndef _LAST_POSITON_H_
-#define _LAST_POSITON_H_
+#ifndef _DEBUG_UTIL_H_
+#define _DEBUG_UTIL_H_
 
-#include "gps_plugin_data_types.h"
+#include <glib.h>
+#include <libgen.h>
 
-void gps_set_last_position(const pos_data_t * pos);
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-void gps_set_position(const pos_data_t * pos);
+#include <dlog.h>
+#define TAG_GPS_MANAGER		"LBS_SERVER_GPS"
+#define TAG_NPS_MANAGER		"LBS_SERVER_NPS"
 
-void gps_get_last_position(pos_data_t * last_pos);
+#define DBG_LOW		LOG_DEBUG
+#define DBG_INFO	LOG_INFO
+#define DBG_WARN	LOG_WARN
+#define DBG_ERR		LOG_ERROR
 
-#endif				/* _LAST_POSITON_H_ */
+#define LOG_GPS(dbg_lvl,fmt,args...)  SLOG(dbg_lvl, TAG_GPS_MANAGER, fmt, ##args)
+#define LOG_NPS(dbg_lvl,fmt,args...)  SLOG(dbg_lvl, TAG_NPS_MANAGER, fmt,##args)
+#define FUNC_ENTRANCE_SERVER		LOG_GPS(DBG_LOW, "[%s] Entered!!", __func__);
+
+#ifdef __cplusplus
+}
+#endif
+#endif				/* _DEBUG_UTIL_H_ */

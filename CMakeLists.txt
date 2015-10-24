@@ -2,9 +2,9 @@ CMAKE_MINIMUM_REQUIRED(VERSION 2.6)
 PROJECT(com.samsung.lbs-server C)
 
 SET(PREFIX ${CMAKE_INSTALL_PREFIX})
-SET(LIB_DIR "${PREFIX}/lib")
-SET(INCLUDE_DIR "${PREFIX}/include")
-SET(LIBEXEC_DIR "${PREFIX}/libexec")
+#SET(LIB_DIR "${PREFIX}/lib")
+#SET(INCLUDE_DIR "${PREFIX}/include")
+SET(BIN_DIR "${PREFIX}/bin")
 
 #Dependencies
 SET(common_dp "glib-2.0 lbs-dbus dlog gio-2.0")

@@ -1,6 +1,36 @@
+[Version]	lbs-server_0.6.10
+[Date]		17 July 2015
+[Problem]	lbs-server has smack issue because brcm plugin(libbrcm.so) doesn't write data into /run/systemd/journal/dev-log.
+[Solution]	[Workaround] lbs-server will be run by root util smack issue is resolved.
+[Developer]	Young-Ae Kang <youngae.kang@samsung.com>
+
+================================================================================
+
+[Version]	lbs-server_0.6.8
+[Date]		17 Jun 2015
+[Title]		Remove unused smack label
+[Developer]	Kyoungjun Sung <kj7.sung@samsung.com>
+
+================================================================================
+
+[Version]	lbs-server_0.6.7
+[Date]		12 Jun 2015
+[Title]		The user and group of lbs-server process was changed to system when it is activated by DBus automatically.
+		Install directory was change from /usr/libexec to /usr/bin
+		manifest files was moved to packaging directory
+[Developer]	Young-Ae Kang <youngae.kang@samsung.com>
+
+================================================================================
+
+[Version]	lbs-server_0.6.4
+[Date]		17 Apr 2015
+[Title]		Dbus path changed to support auto activation
+[Developer]	Kyoungjun Sung <kj7.sung@samsung.com>
+
+================================================================================
 [Version]	lbs-server_0.6.3
 [Date]		19 Mar 2015
-[Changes]	Permission changed to system for non-root daemon, Vconf permission changed
+[Title]		Permission changed to system for non-root daemon, Vconf permission changed
 
 ================================================================================
 [Version] lbs-server_0.5.4

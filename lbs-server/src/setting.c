@@ -4,7 +4,7 @@
  * Copyright (c) 2011-2013 Samsung Electronics Co., Ltd. All rights reserved.
  *
  * Contact: Youngae Kang <youngae.kang@samsung.com>, Minjune Kim <sena06.kim@samsung.com>
- *		  Genie Kim <daejins.kim@samsung.com>
+ *          Genie Kim <daejins.kim@samsung.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -134,11 +134,11 @@ static unsigned char _get_device_name(char *device_name)
 	char *ret_str;
 
 	ret_str = vconf_get_str(VCONFKEY_SETAPPL_DEVICE_NAME_STR);
-	if(ret_str == NULL) {
+	if (ret_str == NULL) {
 		return FALSE;
 	}
 
-	memcpy(device_name, ret_str, strlen(ret_str)+1);
+	memcpy(device_name, ret_str, strlen(ret_str) + 1);
 
 	return TRUE;
 }
@@ -174,11 +174,11 @@ unsigned char setting_get_unique_id(char *unique_id)
 	}
 
 	snprintf(unique_id, NPS_UNIQUE_ID_LEN, "%1.X%1.X%1.X%1.X%1.X%1.X%1.X%1.X%1.X%1.X%1.X%1.X%1.X%1.X%1.X%1.X%1.X%1.X%1.X",
-		device_name[0]&0xF, device_name[1]&0xF, device_name[2]&0xF, mac_addr[3]&0xF,
-		mac_addr[9]&0xF, device_name[3]&0xF, mac_addr[0]&0xF, mac_addr[5]&0xF,
-		device_name[4]&0xF, mac_addr[6]&0xF, mac_addr[4]&0xF, device_name[5]&0xF,
-		mac_addr[1]&0xF, mac_addr[7]&0xF, device_name[6]&0xF, mac_addr[9]&0xF,
-		mac_addr[10]&0xF, mac_addr[2]&0xF, mac_addr[8]&0xF);
+			device_name[0] & 0xF, device_name[1] & 0xF, device_name[2] & 0xF, mac_addr[3] & 0xF,
+			mac_addr[9] & 0xF, device_name[3] & 0xF, mac_addr[0] & 0xF, mac_addr[5] & 0xF,
+			device_name[4] & 0xF, mac_addr[6] & 0xF, mac_addr[4] & 0xF, device_name[5] & 0xF,
+			mac_addr[1] & 0xF, mac_addr[7] & 0xF, device_name[6] & 0xF, mac_addr[9] & 0xF,
+			mac_addr[10] & 0xF, mac_addr[2] & 0xF, mac_addr[8] & 0xF);
 	g_free(mac_addr);
 	g_free(device_name);
 

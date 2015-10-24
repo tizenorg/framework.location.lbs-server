@@ -29,8 +29,10 @@
 #include <vconf.h>
 #include "setting.h"
 #include <lbs_dbus_server.h>
+
 #include "gps_plugin_data_types.h"
 #include "lbs_server.h"
+
 #include "nps_plugin_module.h"
 #include "nps_plugin_intf.h"
 
@@ -41,7 +43,7 @@
 
 
 typedef struct {
-	// gps variables
+	/* gps variables */
 	pos_data_t position;
 	batch_data_t batch;
 	sv_data_t satellite;
@@ -52,7 +54,7 @@ typedef struct {
 	gboolean is_gps_running;
 	gint gps_client_count;
 
-	// nps variables
+	/* nps variables */
 	NpsManagerHandle handle;
 	unsigned long period;
 	NpsManagerPositionExt pos;
@@ -63,13 +65,13 @@ typedef struct {
 	gint nps_client_count;
 	unsigned char *token;
 
-	// shared variables
+	/* shared variables */
 	GMainLoop *loop;
 	GMutex mutex;
 	GCond cond;
 	LbsStatus status;
 
-// dynamic interval update
+	/* dynamic interval update */
 	GHashTable *dynamic_interval_table;
 	guint *optimized_interval_array;
 	guint temp_minimum_interval;
@@ -79,15 +81,15 @@ typedef struct {
 } lbs_server_s;
 
 typedef struct {
-	lbs_server_s* lbs_server;
+	lbs_server_s *lbs_server;
 	int method;
 } dynamic_interval_updator_user_data;
 
 static gboolean gps_remove_all_clients(lbs_server_s *lbs_server);
 
-static void __setting_gps_cb (keynode_t *key, gpointer user_data)
+static void __setting_gps_cb(keynode_t *key, gpointer user_data)
 {
-	LOG_GPS(DBG_LOW, "__setting_gps_cb");
+	LOG_GPS(DBG_LOW, "ENTER >>>");
 	lbs_server_s *lbs_server = (lbs_server_s *)user_data;
 	int onoff = 0;
 	gboolean ret = FALSE;
@@ -174,7 +176,7 @@ static void nps_set_status(lbs_server_s *lbs_server, LbsStatus status)
 	lbs_server_emit_status_changed(lbs_server->lbs_dbus_server, LBS_SERVER_METHOD_NPS, status);
 }
 
-static void nps_update_position (lbs_server_s *lbs_server_nps, NpsManagerPositionExt pos)
+static void nps_update_position(lbs_server_s *lbs_server_nps, NpsManagerPositionExt pos)
 {
 	if (!lbs_server_nps) {
 		LOG_NPS(DBG_ERR, "lbs-server is NULL!!");
@@ -192,26 +194,26 @@ static void nps_update_position (lbs_server_s *lbs_server_nps, NpsManagerPositio
 	lbs_server_nps->pos.hor_accuracy = pos.hor_accuracy;
 	lbs_server_nps->pos.ver_accuracy = pos.ver_accuracy;
 
-	accuracy = g_variant_ref_sink (g_variant_new("(idd)", lbs_server_nps->pos.acc_level, lbs_server_nps->pos.hor_accuracy, lbs_server_nps->pos.ver_accuracy));
+	accuracy = g_variant_ref_sink(g_variant_new("(idd)", lbs_server_nps->pos.acc_level, lbs_server_nps->pos.hor_accuracy, lbs_server_nps->pos.ver_accuracy));
 
 	LOG_NPS(DBG_LOW, "time:%d", lbs_server_nps->pos.timestamp);
 
 	lbs_server_emit_position_changed(lbs_server_nps->lbs_dbus_server, LBS_SERVER_METHOD_NPS,
-			lbs_server_nps->pos.fields, lbs_server_nps->pos.timestamp, lbs_server_nps->pos.latitude,
-			lbs_server_nps->pos.longitude, lbs_server_nps->pos.altitude, lbs_server_nps->pos.speed,
-			lbs_server_nps->pos.direction, 0.0, accuracy);
+									lbs_server_nps->pos.fields, lbs_server_nps->pos.timestamp, lbs_server_nps->pos.latitude,
+									lbs_server_nps->pos.longitude, lbs_server_nps->pos.altitude, lbs_server_nps->pos.speed,
+									lbs_server_nps->pos.direction, 0.0, accuracy);
 
 	g_variant_unref(accuracy);
 }
 
 static gboolean nps_report_callback(gpointer user_data)
 {
-	LOG_NPS(DBG_LOW, "nps_report_callback");
-	double	vertical_accuracy = -1.0; /* vertical accuracy's invalid value is  -1 */
+	LOG_NPS(DBG_LOW, "ENTER >>>");
+	double	vertical_accuracy = -1.0; /* vertical accuracy's invalid value is -1 */
 	Plugin_LocationInfo location;
 	memset(&location, 0x00, sizeof(Plugin_LocationInfo));
 	lbs_server_s *lbs_server_nps = (lbs_server_s *) user_data;
-	if(NULL == lbs_server_nps ) {
+	if (NULL == lbs_server_nps) {
 		LOG_GPS(DBG_ERR, "lbs_server_s is NULL!!");
 		return FALSE;
 	}
@@ -270,7 +272,7 @@ static gboolean nps_report_callback(gpointer user_data)
 
 static void __nps_callback(void *arg, const Plugin_LocationInfo *location, const void *reserved)
 {
-	LOG_NPS(DBG_LOW, "__nps_callback");
+	LOG_NPS(DBG_LOW, "ENTER >>>");
 	lbs_server_s *lbs_server = (lbs_server_s *)arg;
 	if (!lbs_server) {
 		LOG_NPS(DBG_ERR, "lbs_server is NULL!!");
@@ -279,8 +281,8 @@ static void __nps_callback(void *arg, const Plugin_LocationInfo *location, const
 
 	if (!location) {
 		LOG_NPS(DBG_LOW, "NULL is returned from plugin...");
-		// sometimes plugin returns NULL even if it is connected...
-		//nps_set_status (lbs_server , LBS_STATUS_ACQUIRING);
+		/* sometimes plugin returns NULL even if it is connected... */
+		/*nps_set_status (lbs_server , LBS_STATUS_ACQUIRING); */
 		return;
 	}
 
@@ -293,7 +295,7 @@ static void __nps_callback(void *arg, const Plugin_LocationInfo *location, const
 
 static void _nps_token_callback(void *arg, const unsigned char *token, unsigned tokenSize)
 {
-	LOG_NPS(DBG_LOW, "_nps_token_callback");
+	LOG_NPS(DBG_LOW, "ENTER >>>");
 	lbs_server_s *lbs_server_nps = (lbs_server_s *)arg;
 	if (NULL == lbs_server_nps) {
 		LOG_NPS(DBG_ERR, "lbs-server is NULL!!");
@@ -303,7 +305,7 @@ static void _nps_token_callback(void *arg, const unsigned char *token, unsigned 
 	if (token == NULL) {
 		LOG_NPS(DBG_ERR, "*** no token to save\n");
 	} else {
-		// save the token in persistent storage
+		/* save the token in persistent storage */
 		g_mutex_lock(&lbs_server_nps->mutex);
 		lbs_server_nps->token = g_new0(unsigned char, tokenSize);
 		if (lbs_server_nps->token) {
@@ -316,7 +318,7 @@ static void _nps_token_callback(void *arg, const unsigned char *token, unsigned 
 
 static void _network_enabled_cb(keynode_t *key, void *user_data)
 {
-	LOG_GPS(DBG_LOW, "_network_enabled_cb");
+	LOG_GPS(DBG_LOW, "ENTER >>>");
 	int enabled = 0;
 
 	setting_get_int(VCONFKEY_LOCATION_NETWORK_ENABLED, &enabled);
@@ -331,9 +333,9 @@ static void _network_enabled_cb(keynode_t *key, void *user_data)
 	}
 	*/
 }
-static gboolean nps_offline_location(lbs_server_s * lbs_server)
+static gboolean nps_offline_location(lbs_server_s *lbs_server)
 {
-	LOG_NPS(DBG_LOW, "nps_offline_location");
+	LOG_NPS(DBG_LOW, "ENTER >>>");
 	if (NULL == lbs_server) {
 		LOG_GPS(DBG_ERR, "lbs-server is NULL!!");
 		return FALSE;
@@ -379,13 +381,13 @@ static void __nps_cancel_callback(void *arg)
 	g_mutex_unlock(&lbs_server->mutex);
 }
 
-static void start_batch_tracking(lbs_server_s * lbs_server, int batch_interval, int batch_period)
+static void start_batch_tracking(lbs_server_s *lbs_server, int batch_interval, int batch_period)
 {
 	g_mutex_lock(&lbs_server->mutex);
 	lbs_server->gps_client_count++;
 	g_mutex_unlock(&lbs_server->mutex);
 
-	if(lbs_server->is_gps_running == TRUE){
+	if (lbs_server->is_gps_running == TRUE) {
 		LOG_GPS(DBG_LOW, "Batch: gps is already running");
 		return;
 	}
@@ -399,16 +401,16 @@ static void start_batch_tracking(lbs_server_s * lbs_server, int batch_interval, 
 
 		lbs_server->is_needed_changing_interval = FALSE;
 
-		// ADD notify
+		/* ADD notify */
 		setting_notify_key_changed(VCONFKEY_LOCATION_ENABLED, __setting_gps_cb, lbs_server);
 	} else {
 		LOG_GPS(DBG_ERR, "Batch: Fail to request_start_batch_session");
 	}
 }
 
-static void stop_batch_tracking(lbs_server_s * lbs_server)
+static void stop_batch_tracking(lbs_server_s *lbs_server)
 {
-	LOG_GPS(DBG_LOW, "Batch: stop_tracking GPS");
+	LOG_GPS(DBG_LOW, "ENTER >>>");
 
 	g_mutex_lock(&lbs_server->mutex);
 	lbs_server->gps_client_count--;
@@ -419,14 +421,14 @@ static void stop_batch_tracking(lbs_server_s * lbs_server)
 		return;
 	}
 
-	if (lbs_server->gps_client_count <= 0){
+	if (lbs_server->gps_client_count <= 0) {
 		g_mutex_lock(&lbs_server->mutex);
 		lbs_server->gps_client_count = 0;
 
 		if (request_stop_batch_session() == TRUE) {
 			lbs_server->is_gps_running = FALSE;
 			lbs_server->sv_used = FALSE;
-			// remove notify
+			/* remove notify */
 			setting_ignore_key_changed(VCONFKEY_LOCATION_ENABLED, __setting_gps_cb);
 			g_mutex_unlock(&lbs_server->mutex);
 		}
@@ -436,80 +438,80 @@ static void stop_batch_tracking(lbs_server_s * lbs_server)
 	lbs_server_emit_status_changed(lbs_server->lbs_dbus_server, LBS_SERVER_METHOD_GPS, LBS_STATUS_UNAVAILABLE);
 }
 
-static void start_tracking(lbs_server_s * lbs_server, lbs_server_method_e method)
+static void start_tracking(lbs_server_s *lbs_server, lbs_server_method_e method)
 {
-	switch(method){
-	case LBS_SERVER_METHOD_GPS:
+	switch (method) {
+		case LBS_SERVER_METHOD_GPS:
 
-		g_mutex_lock(&lbs_server->mutex);
-		lbs_server->gps_client_count++;
-		g_mutex_unlock(&lbs_server->mutex);
-
-		if(lbs_server->is_gps_running == TRUE){
-			LOG_GPS(DBG_LOW, "gps is already running");
-			return;
-		}
-		LOG_GPS(DBG_LOW, "start_tracking GPS");
-		lbs_server->status = LBS_STATUS_ACQUIRING;
-
-		if (request_start_session((int)(lbs_server->optimized_interval_array[method])) == TRUE) {
 			g_mutex_lock(&lbs_server->mutex);
-			lbs_server->is_gps_running = TRUE;
+			lbs_server->gps_client_count++;
 			g_mutex_unlock(&lbs_server->mutex);
 
-			lbs_server->is_needed_changing_interval = FALSE;
+			if (lbs_server->is_gps_running == TRUE) {
+				LOG_GPS(DBG_LOW, "gps is already running");
+				return;
+			}
+			LOG_GPS(DBG_LOW, "start_tracking GPS");
+			lbs_server->status = LBS_STATUS_ACQUIRING;
 
-			// ADD notify
-			setting_notify_key_changed(VCONFKEY_LOCATION_ENABLED, __setting_gps_cb, lbs_server);
-		} else {
-			LOG_GPS(DBG_ERR, "Fail to request_start_session");
-		}
+			if (request_start_session((int)(lbs_server->optimized_interval_array[method])) == TRUE) {
+				g_mutex_lock(&lbs_server->mutex);
+				lbs_server->is_gps_running = TRUE;
+				g_mutex_unlock(&lbs_server->mutex);
 
-		break;
+				lbs_server->is_needed_changing_interval = FALSE;
 
-	case LBS_SERVER_METHOD_NPS:
-		g_mutex_lock(&lbs_server->mutex);
-		lbs_server->nps_client_count++;
-		g_mutex_unlock(&lbs_server->mutex);
+				/* ADD notify */
+				setting_notify_key_changed(VCONFKEY_LOCATION_ENABLED, __setting_gps_cb, lbs_server);
+			} else {
+				LOG_GPS(DBG_ERR, "Fail to request_start_session");
+			}
 
-		if(lbs_server->is_nps_running == TRUE){
-			LOG_NPS(DBG_LOW, "nps is already running");
-			return;
-		}
+			break;
 
-		LOG_NPS(DBG_LOW, "start_tracking - LBS_SERVER_METHOD_NPS");
-		nps_set_status(lbs_server, LBS_STATUS_ACQUIRING);
-
-		void *handle_str = NULL;
-		int ret = get_nps_plugin_module()->start(lbs_server->period, __nps_callback, lbs_server, &(handle_str));
-		LOG_NPS(DBG_LOW, "after get_nps_plugin_module()->location");
-
-		if (ret) {
-			lbs_server->handle = handle_str;
+		case LBS_SERVER_METHOD_NPS:
 			g_mutex_lock(&lbs_server->mutex);
-			lbs_server->is_nps_running = TRUE;
+			lbs_server->nps_client_count++;
 			g_mutex_unlock(&lbs_server->mutex);
-			vconf_ignore_key_changed(VCONFKEY_LOCATION_NETWORK_ENABLED, _network_enabled_cb);
-			return;
-		}
 
-		if (nps_is_dummy_plugin_module() != TRUE) {
-			nps_offline_location(lbs_server);
-		}
+			if (lbs_server->is_nps_running == TRUE) {
+				LOG_NPS(DBG_LOW, "nps is already running");
+				return;
+			}
 
-		LOG_NPS(DBG_ERR, "FAILS WPS START");
-		nps_set_status(lbs_server, LBS_STATUS_ERROR);
-		break;
+			LOG_NPS(DBG_LOW, "start_tracking - LBS_SERVER_METHOD_NPS");
+			nps_set_status(lbs_server, LBS_STATUS_ACQUIRING);
 
-	default:
-		LOG_GPS(DBG_LOW, "start_tracking Invalid");
+			void *handle_str = NULL;
+			int ret = get_nps_plugin_module()->start(lbs_server->period, __nps_callback, lbs_server, &(handle_str));
+			LOG_NPS(DBG_LOW, "after get_nps_plugin_module()->location");
+
+			if (ret) {
+				lbs_server->handle = handle_str;
+				g_mutex_lock(&lbs_server->mutex);
+				lbs_server->is_nps_running = TRUE;
+				g_mutex_unlock(&lbs_server->mutex);
+				vconf_ignore_key_changed(VCONFKEY_LOCATION_NETWORK_ENABLED, _network_enabled_cb);
+				return;
+			}
+
+			if (nps_is_dummy_plugin_module() != TRUE) {
+				nps_offline_location(lbs_server);
+			}
+
+			LOG_NPS(DBG_ERR, "FAILS WPS START");
+			nps_set_status(lbs_server, LBS_STATUS_ERROR);
+			break;
+
+		default:
+			LOG_GPS(DBG_LOW, "start_tracking Invalid");
 	}
 
 }
 
-static gboolean nps_stop(lbs_server_s * lbs_server_nps)
+static gboolean nps_stop(lbs_server_s *lbs_server_nps)
 {
-	LOG_NPS(DBG_LOW, "nps_stop");
+	LOG_NPS(DBG_LOW, "ENTER >>>");
 	if (!lbs_server_nps) {
 		LOG_NPS(DBG_ERR, "lbs-server is NULL!!");
 		return FALSE;
@@ -539,65 +541,65 @@ static gboolean nps_stop(lbs_server_s * lbs_server_nps)
 	return TRUE;
 }
 
-static void stop_tracking(lbs_server_s * lbs_server, lbs_server_method_e method)
+static void stop_tracking(lbs_server_s *lbs_server, lbs_server_method_e method)
 {
-	switch(method){
-	case LBS_SERVER_METHOD_GPS:
-		LOG_GPS(DBG_LOW, "stop_tracking GPS");
+	switch (method) {
+		case LBS_SERVER_METHOD_GPS:
+			LOG_GPS(DBG_LOW, "stop_tracking GPS");
 
-		gps_set_last_position(&lbs_server->position);
+			gps_set_last_position(&lbs_server->position);
 
-		g_mutex_lock(&lbs_server->mutex);
-		lbs_server->gps_client_count--;
-		g_mutex_unlock(&lbs_server->mutex);
-
-		if (lbs_server->is_gps_running == FALSE) {
-			LOG_GPS(DBG_LOW, "gps- is already stopped");
-			return;
-		}
-
-		if (lbs_server->gps_client_count <= 0){
 			g_mutex_lock(&lbs_server->mutex);
-			lbs_server->gps_client_count = 0;
-
-			if (request_stop_session() == TRUE) {
-				lbs_server->is_gps_running = FALSE;
-				lbs_server->sv_used = FALSE;
-				// remove notify
-				setting_ignore_key_changed(VCONFKEY_LOCATION_ENABLED, __setting_gps_cb);
-				g_mutex_unlock(&lbs_server->mutex);
-			}
-		}
-
-		lbs_server->status = LBS_STATUS_UNAVAILABLE;
-		lbs_server_emit_status_changed(lbs_server->lbs_dbus_server, LBS_SERVER_METHOD_GPS,
-				LBS_STATUS_UNAVAILABLE);
-
-		break;
-	case LBS_SERVER_METHOD_NPS:
-		LOG_NPS(DBG_LOW, "stop_tracking NPS");
-
-		g_mutex_lock(&lbs_server->mutex);
-		lbs_server->nps_client_count--;
-		g_mutex_unlock(&lbs_server->mutex);
-
-		if(lbs_server->is_nps_running == FALSE){
-			LOG_NPS(DBG_LOW, "nps- is already stopped");
-			return;
-		}
-
-		if (lbs_server->nps_client_count <= 0){
-			g_mutex_lock(&lbs_server->mutex);
-			lbs_server->nps_client_count = 0;
+			lbs_server->gps_client_count--;
 			g_mutex_unlock(&lbs_server->mutex);
 
-			LOG_NPS(DBG_LOW, "lbs_server_nps Normal stop");
-			nps_stop(lbs_server);
-		}
+			if (lbs_server->is_gps_running == FALSE) {
+				LOG_GPS(DBG_LOW, "gps- is already stopped");
+				return;
+			}
 
-		break;
-	default:
-		LOG_GPS(DBG_LOW, "stop_tracking Invalid");
+			if (lbs_server->gps_client_count <= 0) {
+				g_mutex_lock(&lbs_server->mutex);
+				lbs_server->gps_client_count = 0;
+
+				if (request_stop_session() == TRUE) {
+					lbs_server->is_gps_running = FALSE;
+					lbs_server->sv_used = FALSE;
+					/* remove notify */
+					setting_ignore_key_changed(VCONFKEY_LOCATION_ENABLED, __setting_gps_cb);
+					g_mutex_unlock(&lbs_server->mutex);
+				}
+			}
+
+			lbs_server->status = LBS_STATUS_UNAVAILABLE;
+			lbs_server_emit_status_changed(lbs_server->lbs_dbus_server, LBS_SERVER_METHOD_GPS,
+											LBS_STATUS_UNAVAILABLE);
+
+			break;
+		case LBS_SERVER_METHOD_NPS:
+			LOG_NPS(DBG_LOW, "stop_tracking NPS");
+
+			g_mutex_lock(&lbs_server->mutex);
+			lbs_server->nps_client_count--;
+			g_mutex_unlock(&lbs_server->mutex);
+
+			if (lbs_server->is_nps_running == FALSE) {
+				LOG_NPS(DBG_LOW, "nps- is already stopped");
+				return;
+			}
+
+			if (lbs_server->nps_client_count <= 0) {
+				g_mutex_lock(&lbs_server->mutex);
+				lbs_server->nps_client_count = 0;
+				g_mutex_unlock(&lbs_server->mutex);
+
+				LOG_NPS(DBG_LOW, "lbs_server_nps Normal stop");
+				nps_stop(lbs_server);
+			}
+
+			break;
+		default:
+			LOG_GPS(DBG_LOW, "stop_tracking Invalid");
 	}
 }
 
@@ -608,7 +610,7 @@ static void update_dynamic_interval_table_foreach_cb(gpointer key, gpointer valu
 	lbs_server_s *lbs_server = updator_ud->lbs_server;
 	int method = updator_ud->method;
 
-	LOG_GPS(DBG_LOW, "foreach dynamic-interval. method:[%d], key:[%s]-interval:[%u], current optimized interval [%u]", method, (char *)key, interval_array[method], lbs_server->optimized_interval_array[method]);
+	LOG_GPS(DBG_LOW, "foreach dynamic-interval. method:[%d], key:[%s] interval:[%u], current optimized interval [%u]", method, (char *)key, interval_array[method], lbs_server->optimized_interval_array[method]);
 	if ((lbs_server->temp_minimum_interval > interval_array[method])) {
 		lbs_server->temp_minimum_interval = interval_array[method];
 	}
@@ -616,7 +618,7 @@ static void update_dynamic_interval_table_foreach_cb(gpointer key, gpointer valu
 
 static gboolean update_pos_tracking_interval(lbs_server_interval_manipulation_type type, const gchar *client, int method, guint interval, gpointer userdata)
 {
-	LOG_GPS(DBG_INFO, "update_pos_tracking_interval");
+	LOG_GPS(DBG_LOW, "ENTER >>>");
 	if (userdata == NULL) return FALSE;
 	if (client == NULL) {
 		LOG_GPS(DBG_ERR, "client is NULL");
@@ -634,77 +636,77 @@ static gboolean update_pos_tracking_interval(lbs_server_interval_manipulation_ty
 	/* manipulate logic for dynamic-interval hash table */
 	switch (type) {
 		case LBS_SERVER_INTERVAL_ADD: {
-			LOG_GPS(DBG_LOW, "ADD, client[%s], method[%d], interval[%u]", client, method, interval);
-			gchar *client_cpy = NULL;
-			client_cpy = g_strdup(client);
+				LOG_GPS(DBG_LOW, "ADD, client[%s], method[%d], interval[%u]", client, method, interval);
+				gchar *client_cpy = NULL;
+				client_cpy = g_strdup(client);
 
-			guint* interval_array = (guint *) g_hash_table_lookup(lbs_server->dynamic_interval_table, client_cpy);
-			if (!interval_array) {
-				LOG_GPS(DBG_LOW, "first add key[%s] to interval-table", client);
-				interval_array = (guint *)g_malloc0(LBS_SERVER_METHOD_SIZE * sizeof(guint));
+				guint *interval_array = (guint *) g_hash_table_lookup(lbs_server->dynamic_interval_table, client_cpy);
 				if (!interval_array) {
-					LOG_GPS(DBG_ERR, "interval_array is NULL");
-					g_free(client_cpy);
-					return FALSE;
+					LOG_GPS(DBG_LOW, "first add key[%s] to interval-table", client);
+					interval_array = (guint *)g_malloc0(LBS_SERVER_METHOD_SIZE * sizeof(guint));
+					if (!interval_array) {
+						LOG_GPS(DBG_ERR, "interval_array is NULL");
+						g_free(client_cpy);
+						return FALSE;
+					}
+					g_hash_table_insert(lbs_server->dynamic_interval_table, (gpointer)client_cpy, (gpointer)interval_array);
 				}
-				g_hash_table_insert(lbs_server->dynamic_interval_table, (gpointer)client_cpy, (gpointer)interval_array);
+				interval_array[method] = interval;
+				lbs_server->temp_minimum_interval = interval;
+				LOG_GPS(DBG_LOW, "ADD done");
+				break;
 			}
-			interval_array[method] = interval;
-			lbs_server->temp_minimum_interval = interval;
-			LOG_GPS(DBG_LOW, "ADD done");
-			break;
-		}
 
 		case LBS_SERVER_INTERVAL_REMOVE: {
-			LOG_GPS(DBG_LOW, "REMOVE, client[%s], method[%d]", client, method);
-			lbs_server->temp_minimum_interval = 120; // interval max value
-			guint *interval_array = (guint *) g_hash_table_lookup(lbs_server->dynamic_interval_table, client);
-			if(!interval_array) {
-				LOG_GPS(DBG_INFO, "Client[%s] Method[%d] is already removed from interval-table", client, method);
-				break;
-			}
-			LOG_GPS(DBG_LOW, "Found interval_array[%d](%p):[%u] from interval-table", method, interval_array, interval_array[method]);
-			interval_array[method] = 0;
-
-			int i = 0;
-			guint interval_each = 0;
-			gboolean is_need_remove_client_from_table = TRUE;
-			for(i = 0; i < LBS_SERVER_METHOD_SIZE; i++){
-				interval_each = interval_array[i];
-				if(interval_each != 0){
-					LOG_GPS(DBG_LOW, "[%s] method[%d]'s interval is not zero - interval: %d. It will not be removed.", client, i, interval_each);
-					is_need_remove_client_from_table = FALSE;
+				LOG_GPS(DBG_LOW, "REMOVE, client[%s], method[%d]", client, method);
+				lbs_server->temp_minimum_interval = 120; /* interval max value */
+				guint *interval_array = (guint *) g_hash_table_lookup(lbs_server->dynamic_interval_table, client);
+				if (!interval_array) {
+					LOG_GPS(DBG_INFO, "Client[%s] Method[%d] is already removed from interval-table", client, method);
 					break;
 				}
-			}
+				LOG_GPS(DBG_LOW, "Found interval_array[%d](%p):[%u] from interval-table", method, interval_array, interval_array[method]);
+				interval_array[method] = 0;
 
-			if (is_need_remove_client_from_table) {
-				LOG_GPS(DBG_LOW, "is_need_remove_client_from_table is TRUE");
-				if (!g_hash_table_remove(lbs_server->dynamic_interval_table, client)) {
-					LOG_GPS(DBG_ERR, "g_hash_table_remove is failed.");
+				int i = 0;
+				guint interval_each = 0;
+				gboolean is_need_remove_client_from_table = TRUE;
+				for (i = 0; i < LBS_SERVER_METHOD_SIZE; i++) {
+					interval_each = interval_array[i];
+					if (interval_each != 0) {
+						LOG_GPS(DBG_LOW, "[%s] method[%d]'s interval is not zero - interval: %d. It will not be removed.", client, i, interval_each);
+						is_need_remove_client_from_table = FALSE;
+						break;
+					}
 				}
-				LOG_GPS(DBG_LOW, "REMOVE done.");
-			}
-			break;
-		}
 
-		case LBS_SERVER_INTERVAL_UPDATE:{
-			LOG_GPS(DBG_LOW, "UPDATE client[%s], method[%d], interval[%u]", client, method, interval);
-			guint *interval_array = (guint *) g_hash_table_lookup(lbs_server->dynamic_interval_table, client);
-			if(!interval_array){
-				LOG_GPS(DBG_LOW, "Client[%s] is not exist in interval-table", client, method);
+				if (is_need_remove_client_from_table) {
+					LOG_GPS(DBG_LOW, "is_need_remove_client_from_table is TRUE");
+					if (!g_hash_table_remove(lbs_server->dynamic_interval_table, client)) {
+						LOG_GPS(DBG_ERR, "g_hash_table_remove is failed.");
+					}
+					LOG_GPS(DBG_LOW, "REMOVE done.");
+				}
 				break;
 			}
-			interval_array[method] = interval;
-			lbs_server->temp_minimum_interval = interval;
-			LOG_GPS(DBG_LOW, "UPDATE done.");
-			break;
-		}
+
+		case LBS_SERVER_INTERVAL_UPDATE: {
+				LOG_GPS(DBG_LOW, "UPDATE client[%s], method[%d], interval[%u]", client, method, interval);
+				guint *interval_array = (guint *) g_hash_table_lookup(lbs_server->dynamic_interval_table, client);
+				if (!interval_array) {
+					LOG_GPS(DBG_LOW, "Client[%s] is not exist in interval-table", client, method);
+					break;
+				}
+				interval_array[method] = interval;
+				lbs_server->temp_minimum_interval = interval;
+				LOG_GPS(DBG_LOW, "UPDATE done.");
+				break;
+			}
 
 		default: {
-			LOG_GPS(DBG_ERR, "unhandled interval-update type");
-			return FALSE;
-		}
+				LOG_GPS(DBG_ERR, "unhandled interval-update type");
+				return FALSE;
+			}
 	}
 
 	/* update logic for optimized-interval value */
@@ -718,15 +720,15 @@ static gboolean update_pos_tracking_interval(lbs_server_interval_manipulation_ty
 	} else {
 		LOG_GPS(DBG_LOW, "dynamic_interval_table size is not zero.");
 
-		dynamic_interval_updator_user_data updator_user_data; // temporary struct
+		dynamic_interval_updator_user_data updator_user_data;
 		updator_user_data.lbs_server = lbs_server;
 		updator_user_data.method = method;
 
-		g_hash_table_foreach (lbs_server->dynamic_interval_table, (GHFunc)update_dynamic_interval_table_foreach_cb, (gpointer)&updator_user_data);
+		g_hash_table_foreach(lbs_server->dynamic_interval_table, (GHFunc)update_dynamic_interval_table_foreach_cb, (gpointer)&updator_user_data);
 
 		if (lbs_server->optimized_interval_array[method] != lbs_server->temp_minimum_interval) {
 			LOG_GPS(DBG_INFO, "Changing optimized_interval value [%u -> %u] for method [%d]",
-						lbs_server->optimized_interval_array[method], lbs_server->temp_minimum_interval, method);
+					lbs_server->optimized_interval_array[method], lbs_server->temp_minimum_interval, method);
 			lbs_server->optimized_interval_array[method] = lbs_server->temp_minimum_interval;
 
 			/* need to send message to provider device */
@@ -745,7 +747,7 @@ static gboolean update_pos_tracking_interval(lbs_server_interval_manipulation_ty
 
 static void request_change_pos_update_interval(int method, gpointer userdata)
 {
-	LOG_GPS(DBG_LOW, "request_change_pos_update_interval");
+	LOG_GPS(DBG_LOW, "ENTER >>>");
 	if (!userdata) return;
 
 	lbs_server_s *lbs_server = (lbs_server_s *)userdata;
@@ -758,10 +760,19 @@ static void request_change_pos_update_interval(int method, gpointer userdata)
 	}
 }
 
+static void get_nmea(int *timestamp, gchar **nmea_data, gpointer userdata)
+{
+	LOG_GPS(DBG_LOW, "ENTER >>>");
+	if (!userdata) return;
+
+	get_nmea_from_server(timestamp, nmea_data);
+
+	LOG_GPS(DBG_LOW, "timestmap: %d, nmea_data: %s", *timestamp, *nmea_data);
+}
+
 static void set_options(GVariant *options, const gchar *client, gpointer userdata)
 {
-	LOG_GPS(DBG_LOW, "set_options callback");
-
+	LOG_GPS(DBG_LOW, "ENTER >>>");
 	lbs_server_s *lbs_server = (lbs_server_s *)userdata;
 
 	GVariantIter iter;
@@ -787,17 +798,17 @@ static void set_options(GVariant *options, const gchar *client, gpointer userdat
 		return;
 	}
 	if (!g_strcmp0(key, "CMD")) {
-		LOG_GPS(DBG_LOW, "set_options[%s]", g_variant_get_string(value, &length));
+		LOG_GPS(DBG_LOW, "set_options [%s]", g_variant_get_string(value, &length));
 		if (!g_strcmp0(g_variant_get_string(value, &length), "START")) {
 
 			while (g_variant_iter_next(&iter, "{&sv}", &key, &value)) {
-				if(!g_strcmp0(key, "METHOD")){
+				if (!g_strcmp0(key, "METHOD")) {
 					method = g_variant_get_int32(value);
 					LOG_GPS(DBG_LOW, "METHOD [%d]", method);
 				}
 
 				if (!g_strcmp0(key, "INTERVAL")) {
-					interval = g_variant_get_uint32 (value);
+					interval = g_variant_get_uint32(value);
 					LOG_GPS(DBG_LOW, "INTERVAL [%u]", interval);
 				}
 
@@ -808,7 +819,7 @@ static void set_options(GVariant *options, const gchar *client, gpointer userdat
 			}
 
 			if (client) {
-				update_pos_tracking_interval (LBS_SERVER_INTERVAL_ADD, client, method, interval, lbs_server);
+				update_pos_tracking_interval(LBS_SERVER_INTERVAL_ADD, client, method, interval, lbs_server);
 			}
 
 			if (app_id) {
@@ -824,11 +835,10 @@ static void set_options(GVariant *options, const gchar *client, gpointer userdat
 				lbs_server->is_needed_changing_interval = FALSE;
 				request_change_pos_update_interval(method, (gpointer)lbs_server);
 			}
-		}
-		else if (!g_strcmp0(g_variant_get_string(value, &length), "STOP")) {
+		} else if (!g_strcmp0(g_variant_get_string(value, &length), "STOP")) {
 
 			while (g_variant_iter_next(&iter, "{&sv}", &key, &value)) {
-				if(!g_strcmp0(key, "METHOD")){
+				if (!g_strcmp0(key, "METHOD")) {
 					method = g_variant_get_int32(value);
 					LOG_GPS(DBG_LOW, "METHOD [%d]", method);
 				}
@@ -840,7 +850,7 @@ static void set_options(GVariant *options, const gchar *client, gpointer userdat
 			}
 
 			if (client) {
-				update_pos_tracking_interval (LBS_SERVER_INTERVAL_REMOVE, client, method, interval, lbs_server);
+				update_pos_tracking_interval(LBS_SERVER_INTERVAL_REMOVE, client, method, interval, lbs_server);
 			}
 
 			if (app_id) {
@@ -856,24 +866,23 @@ static void set_options(GVariant *options, const gchar *client, gpointer userdat
 				lbs_server->is_needed_changing_interval = FALSE;
 				request_change_pos_update_interval(method, (gpointer)lbs_server);
 			}
-		}
-		else if (!g_strcmp0(g_variant_get_string(value, &length), "START_BATCH")) {
+		} else if (!g_strcmp0(g_variant_get_string(value, &length), "START_BATCH")) {
 
 			int batch_interval = 0;
 			int batch_period = 0;
 			while (g_variant_iter_next(&iter, "{&sv}", &key, &value)) {
 
-				if(!g_strcmp0(key, "BATCH_INTERVAL")){
-					batch_interval  = g_variant_get_int32(value);
+				if (!g_strcmp0(key, "BATCH_INTERVAL")) {
+					batch_interval = g_variant_get_int32(value);
 					LOG_GPS(DBG_LOW, "BATCH_INTERVAL [%d]", batch_interval);
-				} else if(!g_strcmp0(key, "BATCH_PERIOD")){
-					batch_period  = g_variant_get_int32(value);
+				} else if (!g_strcmp0(key, "BATCH_PERIOD")) {
+					batch_period = g_variant_get_int32(value);
 					LOG_GPS(DBG_LOW, "BATCH_PERIOD [%d]", batch_period);
 				}
 			}
 
 			if (client) {
-				update_pos_tracking_interval (LBS_SERVER_INTERVAL_ADD, client, method, batch_interval, lbs_server);
+				update_pos_tracking_interval(LBS_SERVER_INTERVAL_ADD, client, method, batch_interval, lbs_server);
 			}
 
 			start_batch_tracking(lbs_server, batch_interval, batch_period);
@@ -883,11 +892,10 @@ static void set_options(GVariant *options, const gchar *client, gpointer userdat
 				request_change_pos_update_interval(method, (gpointer)lbs_server);
 			}
 
-		}
-		else if (!g_strcmp0(g_variant_get_string(value, &length), "STOP_BATCH")) {
+		} else if (!g_strcmp0(g_variant_get_string(value, &length), "STOP_BATCH")) {
 
 			if (client) {
-				update_pos_tracking_interval (LBS_SERVER_INTERVAL_REMOVE, client, method, interval, lbs_server);
+				update_pos_tracking_interval(LBS_SERVER_INTERVAL_REMOVE, client, method, interval, lbs_server);
 			}
 
 			stop_batch_tracking(lbs_server);
@@ -898,69 +906,69 @@ static void set_options(GVariant *options, const gchar *client, gpointer userdat
 			}
 		}
 #ifdef _TIZEN_PUBLIC_
-		} else if (!g_strcmp0(g_variant_get_string(value, &length), "SUPLNI")) {
-			while (g_variant_iter_next(&iter, "{&sv}", &key, &value)) {
-				if (!g_strcmp0(key, "HEADER")) {
-					msg_header = g_variant_dup_string(value, &length);
-				} else if (!g_strcmp0(key, "BODY")) {
-					size = (int) g_variant_get_size(value);
-					msg_body = (char *) g_malloc0(sizeof(char) * size);
-					memcpy(msg_body, g_variant_get_data(value), size);
-				} else if (!g_strcmp0(key, "SIZE")) {
-					size = (int) g_variant_get_int32(value);
-				}
+	} else if (!g_strcmp0(g_variant_get_string(value, &length), "SUPLNI")) {
+		while (g_variant_iter_next(&iter, "{&sv}", &key, &value)) {
+			if (!g_strcmp0(key, "HEADER")) {
+				msg_header = g_variant_dup_string(value, &length);
+			} else if (!g_strcmp0(key, "BODY")) {
+				size = (int) g_variant_get_size(value);
+				msg_body = (char *) g_malloc0(sizeof(char) * size);
+				memcpy(msg_body, g_variant_get_data(value), size);
+			} else if (!g_strcmp0(key, "SIZE")) {
+				size = (int) g_variant_get_int32(value);
 			}
-			request_supl_ni_session(msg_header, msg_body, size);
-			if (msg_header) g_free(msg_header);
-			if (msg_body) g_free(msg_body);
 		}
+		request_supl_ni_session(msg_header, msg_body, size);
+		if (msg_header) g_free(msg_header);
+		if (msg_body) g_free(msg_body);
+	}
 #endif
-		else if (!g_strcmp0(g_variant_get_string(value, &length), "SET:OPT")) {
-			LOG_GPS(DBG_LOW, "SET:OPT is called");
-			gboolean is_update_interval = FALSE, is_update_interval_method = FALSE;
+	else if (!g_strcmp0(g_variant_get_string(value, &length), "SET:OPT")) {
+		LOG_GPS(DBG_LOW, "SET:OPT is called");
+		gboolean is_update_interval = FALSE, is_update_interval_method = FALSE;
 
-			while (g_variant_iter_next(&iter, "{&sv}", &key, &value)) {
+		while (g_variant_iter_next(&iter, "{&sv}", &key, &value)) {
 
-				if (!g_strcmp0(key, "OPTION")) {
-					option = g_variant_dup_string(value, &length);
-					LOG_GPS(DBG_ERR, "option [%s]", option);
+			if (!g_strcmp0(key, "OPTION")) {
+				option = g_variant_dup_string(value, &length);
+				LOG_GPS(DBG_ERR, "option [%s]", option);
 
-					if (!g_strcmp0(option, "DELGPS")) {
-						if (request_delete_gps_data() != TRUE) {
-							LOG_GPS(DBG_ERR, "Fail to request_delete_gps_data");
-						}
+				if (!g_strcmp0(option, "DELGPS")) {
+					if (request_delete_gps_data() != TRUE) {
+						LOG_GPS(DBG_ERR, "Fail to request_delete_gps_data");
 					}
-					else if (!g_strcmp0(option, "USE_SV")) {
-						g_mutex_lock(&lbs_server->mutex);
-						if (lbs_server->sv_used == FALSE)
-							lbs_server->sv_used = TRUE;
-						g_mutex_unlock(&lbs_server->mutex);
-					}
-					g_free(option);
+				} else if (!g_strcmp0(option, "USE_SV")) {
+					g_mutex_lock(&lbs_server->mutex);
+					if (lbs_server->sv_used == FALSE)
+						lbs_server->sv_used = TRUE;
+					g_mutex_unlock(&lbs_server->mutex);
 				}
-
-				if(!g_strcmp0(key, "METHOD")){
-					method = g_variant_get_int32(value);
-					LOG_GPS(DBG_LOW, "METHOD [%d]", method);
-					is_update_interval_method = TRUE;
-				}
-
-				if (!g_strcmp0(key, "INTERVAL_UPDATE")) {
-					interval = g_variant_get_uint32 (value);
-					LOG_GPS(DBG_LOW, "INTERVAL_UPDATE [%u]", interval);
-					is_update_interval = TRUE;
-				}
+				g_free(option);
 			}
 
-			if (is_update_interval && is_update_interval_method && client) {
-				update_pos_tracking_interval (LBS_SERVER_INTERVAL_UPDATE, client, method, interval, lbs_server);
-				if (lbs_server->is_needed_changing_interval) {
-					lbs_server->is_needed_changing_interval = FALSE;
-					request_change_pos_update_interval(method, (gpointer)lbs_server);
-				}
+			if (!g_strcmp0(key, "METHOD")) {
+				method = g_variant_get_int32(value);
+				LOG_GPS(DBG_LOW, "METHOD [%d]", method);
+				is_update_interval_method = TRUE;
+			}
+
+			if (!g_strcmp0(key, "INTERVAL_UPDATE")) {
+				interval = g_variant_get_uint32(value);
+				LOG_GPS(DBG_LOW, "INTERVAL_UPDATE [%u] <-- [%u] ", interval, lbs_server->temp_minimum_interval);
+				if (interval != lbs_server->temp_minimum_interval)
+					is_update_interval = TRUE;
+			}
+		}
+
+		if (is_update_interval && is_update_interval_method && client) {
+			update_pos_tracking_interval(LBS_SERVER_INTERVAL_UPDATE, client, method, interval, lbs_server);
+			if (lbs_server->is_needed_changing_interval) {
+				lbs_server->is_needed_changing_interval = FALSE;
+				request_change_pos_update_interval(method, (gpointer)lbs_server);
 			}
 		}
 	}
+}
 }
 
 static gboolean gps_remove_all_clients(lbs_server_s *lbs_server)
@@ -977,12 +985,12 @@ static gboolean gps_remove_all_clients(lbs_server_s *lbs_server)
 	return TRUE;
 }
 
-static void shutdown(gpointer userdata, gboolean* shutdown_arr)
+static void shutdown(gpointer userdata, gboolean *shutdown_arr)
 {
 	LOG_GPS(DBG_LOW, "shutdown callback gps:%d nps:%d", shutdown_arr[LBS_SERVER_METHOD_GPS], shutdown_arr[LBS_SERVER_METHOD_NPS]);
 	lbs_server_s *lbs_server = (lbs_server_s *)userdata;
 
-	if(shutdown_arr[LBS_SERVER_METHOD_GPS]){
+	if (shutdown_arr[LBS_SERVER_METHOD_GPS]) {
 		LOG_GPS(DBG_LOW, "-> shutdown GPS");
 		if (lbs_server->is_gps_running) {
 			if (gps_remove_all_clients(lbs_server)) {
@@ -991,7 +999,7 @@ static void shutdown(gpointer userdata, gboolean* shutdown_arr)
 		}
 	}
 
-	if(shutdown_arr[LBS_SERVER_METHOD_NPS]){
+	if (shutdown_arr[LBS_SERVER_METHOD_NPS]) {
 		LOG_NPS(DBG_LOW, "-> shutdown NPS");
 		if (lbs_server->is_nps_running) {
 			LOG_NPS(DBG_ERR, "lbs_server_nps is running. nps_stop");
@@ -1016,7 +1024,7 @@ static void shutdown(gpointer userdata, gboolean* shutdown_arr)
 
 static void gps_update_position_cb(pos_data_t *pos, gps_error_t error, void *user_data)
 {
-	LOG_GPS(DBG_LOW, "gps_update_position_cb");
+	LOG_GPS(DBG_LOW, "ENTER >>>");
 
 	GVariant *accuracy = NULL;
 	LbsPositionExtFields fields;
@@ -1030,8 +1038,7 @@ static void gps_update_position_cb(pos_data_t *pos, gps_error_t error, void *use
 		lbs_server->status = LBS_STATUS_AVAILABLE;
 	}
 
-	fields = (LBS_POSITION_EXT_FIELDS_LATITUDE | LBS_POSITION_EXT_FIELDS_LONGITUDE | LBS_POSITION_EXT_FIELDS_ALTITUDE |
-			LBS_POSITION_EXT_FIELDS_SPEED | LBS_POSITION_EXT_FIELDS_DIRECTION);
+	fields = (LBS_POSITION_EXT_FIELDS_LATITUDE | LBS_POSITION_EXT_FIELDS_LONGITUDE | LBS_POSITION_EXT_FIELDS_ALTITUDE | LBS_POSITION_EXT_FIELDS_SPEED | LBS_POSITION_EXT_FIELDS_DIRECTION);
 
 	accuracy = g_variant_new("(idd)", LBS_ACCURACY_LEVEL_DETAILED, pos->hor_accuracy, pos->ver_accuracy);
 	if (NULL == accuracy) {
@@ -1039,13 +1046,13 @@ static void gps_update_position_cb(pos_data_t *pos, gps_error_t error, void *use
 	}
 
 	lbs_server_emit_position_changed(lbs_server->lbs_dbus_server, LBS_SERVER_METHOD_GPS,
-			fields, pos->timestamp, pos->latitude, pos->longitude, pos->altitude,
-			pos->speed, pos->bearing, 0.0, accuracy);
+									 fields, pos->timestamp, pos->latitude, pos->longitude, pos->altitude,
+									 pos->speed, pos->bearing, 0.0, accuracy);
 }
 
-static void gps_update_batch_cb(batch_data_t * batch, void *user_data)
+static void gps_update_batch_cb(batch_data_t *batch, void *user_data)
 {
-	LOG_GPS(DBG_LOW, "gps_update_batch_cb");
+	LOG_GPS(DBG_LOW, "ENTER >>>");
 	lbs_server_s *lbs_server = (lbs_server_s *)(user_data);
 	memcpy(&lbs_server->batch, batch, sizeof(batch_data_t));
 
@@ -1057,15 +1064,15 @@ static void gps_update_batch_cb(batch_data_t * batch, void *user_data)
 	lbs_server_emit_batch_changed(lbs_server->lbs_dbus_server, batch->num_of_location);
 }
 
-static void gps_update_satellite_cb(sv_data_t * sv, void *user_data)
+static void gps_update_satellite_cb(sv_data_t *sv, void *user_data)
 {
 	lbs_server_s *lbs_server = (lbs_server_s *)(user_data);
 	if (lbs_server->sv_used == FALSE) {
-		LOG_GPS(DBG_LOW, "sv_used is FALSE");
+		/*LOG_GPS(DBG_LOW, "sv_used is FALSE"); */
 		return;
 	}
 
-	LOG_GPS(DBG_LOW, "gps_update_satellite_cb");
+	LOG_GPS(DBG_LOW, "ENTER >>>");
 	int index;
 	int timestamp = 0;
 	int satellite_used = 0;
@@ -1077,7 +1084,7 @@ static void gps_update_satellite_cb(sv_data_t * sv, void *user_data)
 	memcpy(&lbs_server->satellite, sv, sizeof(sv_data_t));
 	timestamp = sv->timestamp;
 
-	used_prn_builder = g_variant_builder_new(G_VARIANT_TYPE ("ai"));
+	used_prn_builder = g_variant_builder_new(G_VARIANT_TYPE("ai"));
 	for (index = 0; index < sv->num_of_sat; ++index) {
 		if (sv->sat[index].used) {
 			g_variant_builder_add(used_prn_builder, "i", sv->sat[index].prn);
@@ -1086,33 +1093,27 @@ static void gps_update_satellite_cb(sv_data_t * sv, void *user_data)
 	}
 	used_prn = g_variant_builder_end(used_prn_builder);
 
-	satellite_info_builder = g_variant_builder_new(G_VARIANT_TYPE ("a(iiii)"));
+	satellite_info_builder = g_variant_builder_new(G_VARIANT_TYPE("a(iiii)"));
 	for (index = 0; index < sv->num_of_sat; ++index) {
-		g_variant_builder_add(satellite_info_builder, "(iiii)",  sv->sat[index].prn,
-				sv->sat[index].elevation, sv->sat[index].azimuth, sv->sat[index].snr);
+		g_variant_builder_add(satellite_info_builder, "(iiii)", sv->sat[index].prn,
+							sv->sat[index].elevation, sv->sat[index].azimuth, sv->sat[index].snr);
 	}
 	satellite_info = g_variant_builder_end(satellite_info_builder);
 
 	lbs_server_emit_satellite_changed(lbs_server->lbs_dbus_server, timestamp, satellite_used, sv->num_of_sat,
-			used_prn, satellite_info);
+									used_prn, satellite_info);
 }
 
-static void gps_update_nmea_cb(nmea_data_t * nmea, void *user_data)
+static void gps_update_nmea_cb(nmea_data_t *nmea, void *user_data)
 {
 	lbs_server_s *lbs_server = (lbs_server_s *)(user_data);
-	if (lbs_server->nmea_used == FALSE) {
-		//LOG_GPS(DBG_LOW, "nmea_used is FALSE");
-		return;
-	}
-
-	LOG_GPS(DBG_LOW, "gps_update_nmea_cb");
-	int timestamp = 0;
 
 	if (lbs_server->nmea.data) {
 		g_free(lbs_server->nmea.data);
 		lbs_server->nmea.len = 0;
 		lbs_server->nmea.data = NULL;
 	}
+	lbs_server->nmea.timestamp = lbs_server->position.timestamp;
 	lbs_server->nmea.data = g_malloc(nmea->len + 1);
 	g_return_if_fail(lbs_server->nmea.data);
 
@@ -1120,9 +1121,12 @@ static void gps_update_nmea_cb(nmea_data_t * nmea, void *user_data)
 	lbs_server->nmea.data[nmea->len] = '\0';
 	lbs_server->nmea.len = nmea->len;
 
-	timestamp = lbs_server->position.timestamp;
-
-	lbs_server_emit_nmea_changed(lbs_server->lbs_dbus_server, timestamp, lbs_server->nmea.data);
+	if (lbs_server->nmea_used == FALSE) {
+		/*LOG_GPS(DBG_LOW, "nmea_used is FALSE"); */
+		return;
+	}
+	LOG_GPS(DBG_LOW, "[%d] %s", lbs_server->nmea.timestamp, lbs_server->nmea.data);
+	lbs_server_emit_nmea_changed(lbs_server->lbs_dbus_server, lbs_server->nmea.timestamp, lbs_server->nmea.data);
 }
 
 int gps_update_geofence_transition(int geofence_id, geofence_zone_state_t transition, double latitude, double longitude, double altitude, double speed, double bearing, double hor_accuracy, void *data)
@@ -1161,7 +1165,7 @@ static void resume_fence(gint fence_id, gint monitor_states, gpointer userdata)
 
 static void nps_init(lbs_server_s *lbs_server_nps);
 
-static void lbs_server_init(lbs_server_s * lbs_server)
+static void lbs_server_init(lbs_server_s *lbs_server)
 {
 	LOG_GPS(DBG_LOW, "lbs_server_init");
 
@@ -1215,7 +1219,7 @@ static void nps_get_last_position(lbs_server_s *lbs_server_nps)
 	lbs_server_nps->last_pos.longitude = strtod(last_location[index++], NULL);
 	lbs_server_nps->last_pos.altitude = strtod(last_location[index++], NULL);
 	lbs_server_nps->last_pos.speed = strtod(last_location[index++], NULL);
-	lbs_server_nps->last_pos.direction= strtod(last_location[index++], NULL);
+	lbs_server_nps->last_pos.direction = strtod(last_location[index++], NULL);
 	lbs_server_nps->last_pos.hor_accuracy = strtod(last_location[index], NULL);
 
 	LOG_NPS(DBG_LOW, "get nps_last_position timestamp : %d", lbs_server_nps->last_pos.timestamp);
@@ -1253,13 +1257,13 @@ static void nps_init(lbs_server_s *lbs_server_nps)
 	lbs_server_nps->cond = *cond_temp;
 #endif
 
-	g_mutex_init (&lbs_server_nps->mutex);
+	g_mutex_init(&lbs_server_nps->mutex);
 	g_cond_init(&lbs_server_nps->cond);
 
 	lbs_server_nps->is_nps_running = FALSE;
 	lbs_server_nps->nps_client_count = 0;
 
-	if(!get_nps_plugin_module()->load()) {
+	if (!get_nps_plugin_module()->load()) {
 		LOG_NPS(DBG_ERR, "lbs_server_nps plugin load() failed.");
 		return ;
 	}
@@ -1302,8 +1306,8 @@ static void nps_deinit(lbs_server_s *lbs_server_nps)
 	nps_set_status(lbs_server_nps, LBS_STATUS_UNAVAILABLE);
 }
 
-static void _glib_log (const gchar *log_domain, GLogLevelFlags log_level,
-		const gchar *msg, gpointer user_data)
+static void _glib_log(const gchar *log_domain, GLogLevelFlags log_level,
+					const gchar *msg, gpointer user_data)
 {
 	LOG_NPS(DBG_ERR, "GLIB[%d] : %s", log_level, msg);
 }
@@ -1329,7 +1333,7 @@ int main(int argc, char **argv)
 #endif
 
 	ret_code = initialize_server(argc, argv);
-	if (ret_code !=0) {
+	if (ret_code != 0) {
 		LOG_GPS(DBG_ERR, "initialize_server failed");
 		return 1;
 	}
@@ -1344,12 +1348,13 @@ int main(int argc, char **argv)
 
 	register_update_callbacks(&cb, lbs_server);
 
-	g_log_set_default_handler (_glib_log, lbs_server);
+	g_log_set_default_handler(_glib_log, lbs_server);
 
 	/* create lbs-dbus server */
 	ret_code = lbs_server_create(SERVICE_NAME, SERVICE_PATH, "lbs-server", "lbs-server",
-			&(lbs_server->lbs_dbus_server), set_options, shutdown, update_pos_tracking_interval, request_change_pos_update_interval,
-			add_fence, remove_fence, pause_fence, resume_fence, (gpointer)lbs_server);
+								&(lbs_server->lbs_dbus_server), set_options, shutdown, update_pos_tracking_interval,
+								request_change_pos_update_interval, get_nmea,
+								add_fence, remove_fence, pause_fence, resume_fence, (gpointer)lbs_server);
 	if (ret_code != LBS_SERVER_ERROR_NONE) {
 		LOG_GPS(DBG_ERR, "lbs_server_create failed");
 		return 1;

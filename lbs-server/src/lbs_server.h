@@ -48,7 +48,7 @@ typedef enum {
  * @param[in]	error		Error report
  * @param[in]	user_data	User defined data
  */
-typedef void (*gps_pos_cb) (pos_data_t * pos, gps_error_t error, void *user_data);
+typedef void (*gps_pos_cb)(pos_data_t *pos, gps_error_t error, void *user_data);
 
 /**
  * This callback is called with batch data.
@@ -56,7 +56,7 @@ typedef void (*gps_pos_cb) (pos_data_t * pos, gps_error_t error, void *user_data
  * @param[in]	batch		Batch data
  * @param[in]	user_data	User defined data
  */
-typedef void (*gps_batch_cb) (batch_data_t * batch, void *user_data);
+typedef void (*gps_batch_cb)(batch_data_t *batch, void *user_data);
 
 /**
  * This callback is called with satellite data.
@@ -64,7 +64,7 @@ typedef void (*gps_batch_cb) (batch_data_t * batch, void *user_data);
  * @param[in]	sv		Satellite data
  * @param[in]	user_data	User defined data
  */
-typedef void (*gps_sv_cb) (sv_data_t * sv, void *user_data);
+typedef void (*gps_sv_cb)(sv_data_t *sv, void *user_data);
 
 /**
  * This callback is called with nmea.
@@ -72,7 +72,7 @@ typedef void (*gps_sv_cb) (sv_data_t * sv, void *user_data);
  * @param[in]	nmea		NMEA data
  * @param[in]	user_data	User defined data
  */
-typedef void (*gps_nmea_cb) (nmea_data_t * nmea, void *user_data);
+typedef void (*gps_nmea_cb)(nmea_data_t *nmea, void *user_data);
 
 /**
  * GPS callback structure.
@@ -140,14 +140,14 @@ typedef enum {
 int gps_update_geofence_transition(int geofence_id, geofence_zone_state_t transition, double latitude, double longitude, double altitude, double speed, double bearing, double hor_accuracy, void *data);
 int gps_update_geofence_service_status(int status, void *data);
 
-// NPS
+/* NPS */
 
 typedef enum {
 	LBS_POSITION_FIELDS_NONE = 0,
 	LBS_POSITION_FIELDS_LATITUDE = 1 << 0,
 	LBS_POSITION_FIELDS_LONGITUDE = 1 << 1,
 	LBS_POSITION_FIELDS_ALTITUDE = 1 << 2
-} LbsPositionFields;	// not used
+} LbsPositionFields;	/* not used */
 
 typedef struct {
 	LbsPositionExtFields fields;

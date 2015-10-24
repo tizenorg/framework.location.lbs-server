@@ -32,7 +32,7 @@
 #define MAX_GPS_LOC_ITEM	7
 #define UPDATE_INTERVAL		60
 
-void gps_set_last_position(const pos_data_t * pos)
+void gps_set_last_position(const pos_data_t *pos)
 {
 	if (pos == NULL) return;
 
@@ -45,7 +45,7 @@ void gps_set_last_position(const pos_data_t * pos)
 	setting_set_string(VCONFKEY_LOCATION_NV_LAST_GPS_LOCATION, location);
 }
 
-void gps_set_position(const pos_data_t * pos)
+void gps_set_position(const pos_data_t *pos)
 {
 	if (pos == NULL)
 		return;
@@ -77,7 +77,7 @@ void gps_set_position(const pos_data_t * pos)
 	}
 }
 
-void gps_get_last_position(pos_data_t * last_pos)
+void gps_get_last_position(pos_data_t *last_pos)
 {
 	if (last_pos == NULL)
 		return;

@@ -310,7 +310,7 @@ typedef struct {
  * Callback function
  * LBS server needs to register a callback function with GPS OEM to receive asynchronous events.
  */
-typedef int (*gps_event_cb) (gps_event_info_t *gps_event_info, void *user_data);
+typedef int (*gps_event_cb)(gps_event_info_t *gps_event_info, void *user_data);
 
 /**
  * GPS action type
@@ -406,14 +406,13 @@ typedef struct {
  */
 typedef struct {
 	/** Initialize plugin module and register callback function for event delivery. */
-	int (*init) (gps_event_cb gps_event_cb, void *user_data);
+	int (*init)(gps_event_cb gps_event_cb, void *user_data);
 
 	/** Deinitialize plugin module */
-	int (*deinit) (gps_failure_reason_t *reason_code);
+	int (*deinit)(gps_failure_reason_t *reason_code);
 
 	/** Request specific action to plugin module */
-	int (*request) (gps_action_t gps_action, void *gps_action_data,
-			gps_failure_reason_t *reason_code);
+	int (*request)(gps_action_t gps_action, void *gps_action_data, gps_failure_reason_t *reason_code);
 } gps_plugin_interface;
 
 const gps_plugin_interface *get_gps_plugin_interface();

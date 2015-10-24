@@ -1,3 +1,7 @@
 [D-BUS Service]
 Name=org.tizen.lbs.Providers.LbsServer
-Exec=@LIBEXEC_DIR@/lbs-server
+Exec=@BIN_DIR@/lbs-server
+User=root
+Group=root
+#User=system
+#Group=system

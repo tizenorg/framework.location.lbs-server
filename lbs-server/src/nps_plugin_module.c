@@ -34,13 +34,13 @@
 static const nps_plugin_interface  *g_plugin = NULL;
 static int g_is_nps_dummy_module = FALSE;
 
-int dummy_load (void);
+int dummy_load(void);
 int dummy_unload(void);
 int dummy_start(unsigned long period, LocationCallback cb, void *arg, void **handle);
 int dummy_stop(void *handle, CancelCallback cb, void *arg);
 void dummy_get_offline_token(const unsigned char *key, unsigned int keyLengh, OfflineTokenCallback cb, void *arg);
 int dummy_offline_location(const unsigned char *key, unsigned int keyLength, const unsigned char *token, unsigned int tokenSize, LocationCallback cb, void *arg);
-void dummy_cell_location (LocationCallback callback, void* arg);
+void dummy_cell_location(LocationCallback callback, void *arg);
 
 static nps_plugin_interface g_dummy = {
 	.load = dummy_load,
@@ -65,7 +65,7 @@ int nps_load_plugin_module(void **plugin_handle)
 
 	strncpy(plugin_path, NPS_PLUGIN_PATH, sizeof(plugin_path));
 
-	if (access (plugin_path, R_OK) != 0) {
+	if (access(plugin_path, R_OK) != 0) {
 		LOG_NPS(DBG_ERR, "Failed to access plugin module. [%s]", plugin_path);
 		LOG_NPS(DBG_LOW, "load dummy");
 		g_plugin = &g_dummy;
@@ -80,7 +80,7 @@ int nps_load_plugin_module(void **plugin_handle)
 		return FALSE;
 	}
 
-	const nps_plugin_interface *(*get_nps_plugin_interface) ();
+	const nps_plugin_interface *(*get_nps_plugin_interface)();
 	get_nps_plugin_interface = dlsym(*plugin_handle, "get_nps_plugin_interface");
 	if (!get_nps_plugin_interface) {
 		LOG_NPS(DBG_ERR, "Failed to find entry symbol in plugin module.");
@@ -120,7 +120,7 @@ const nps_plugin_interface *get_nps_plugin_module(void)
 	return g_plugin;
 }
 
-int dummy_load (void)
+int dummy_load(void)
 {
 	LOG_NPS(DBG_ERR, "Dummy func.");
 	return FALSE;
@@ -155,7 +155,7 @@ int dummy_offline_location(const unsigned char *key, unsigned int keyLength, con
 	return FALSE;
 }
 
-void dummy_cell_location (LocationCallback callback, void* arg)
+void dummy_cell_location(LocationCallback callback, void *arg)
 {
 	LOG_NPS(DBG_ERR, "Dummy func.");
 }

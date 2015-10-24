@@ -1,7 +1,7 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 2.0)
 PROJECT(lbs-server C CXX)
 
-SET(SERVER_SRCS_DIR "${CMAKE_CURRENT_SOURCE_DIR}")
+SET(SERVER_SRCS_DIR "src")
 SET(server_pkgs_LDFLAGS "${server_pkgs_LDFLAGS} -ldl")
 SET(SERVER_EXTRA_CFLAGS "${SERVER_EXTRA_CFLAGS} -D_GNU_SOURCE")
 
@@ -18,23 +18,23 @@ SET(SERVER_SRCS
 )
 
 INCLUDE_DIRECTORIES(
-	${CMAKE_CURRENT_SOURCE_DIR}
-	${CMAKE_CURRENT_SOURCE_DIR}/include
+	src	
+	include
 )
 
 CONFIGURE_FILE(org.tizen.lbs.Providers.LbsServer.service.in org.tizen.lbs.Providers.LbsServer.service @ONLY)
-INSTALL(FILES ${CMAKE_CURRENT_BINARY_DIR}/org.tizen.lbs.Providers.LbsServer.service DESTINATION /usr/share/dbus-1/services)
-INSTALL(FILES ${CMAKE_CURRENT_BINARY_DIR}/lbs-server.provider DESTINATION /usr/share/lbs)
-INSTALL(FILES ${CMAKE_CURRENT_SOURCE_DIR}/script/lbs-server DESTINATION /etc/rc.d/init.d)
+INSTALL(FILES org.tizen.lbs.Providers.LbsServer.service DESTINATION /usr/share/dbus-1/system-services)
+#INSTALL(FILES lbs-server.provider DESTINATION /usr/share/lbs)
+INSTALL(FILES script/lbs-server DESTINATION /etc/rc.d/init.d)
 
-CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/lbs-server-plugin.pc.in lbs-server-plugin.pc @ONLY)
-INSTALL(FILES ${CMAKE_CURRENT_BINARY_DIR}/lbs-server-plugin.pc DESTINATION /usr/lib/pkgconfig)
+CONFIGURE_FILE(lbs-server-plugin.pc.in lbs-server-plugin.pc @ONLY)
+INSTALL(FILES lbs-server-plugin.pc DESTINATION ${LIB_DIR}/pkgconfig)
 
 ADD_EXECUTABLE(${PROJECT_NAME} ${SERVER_SRCS})
 TARGET_LINK_LIBRARIES(${PROJECT_NAME} ${server_pkgs_LDFLAGS} -lm)
 SET_TARGET_PROPERTIES(${PROJECT_NAME} PROPERTIES COMPILE_FLAGS ${SERVER_EXTRA_CFLAGS})
 SET(CMAKE_EXE_LINKER_FLAGS "-Wl,--as-needed -pie")
 
-INSTALL(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include/ DESTINATION ${INCLUDE_DIR}/lbs-server-plugin FILES_MATCHING PATTERN "*.h")
+INSTALL(DIRECTORY include/ DESTINATION ${INCLUDE_DIR}/lbs-server-plugin FILES_MATCHING PATTERN "*.h")
 
-INSTALL(TARGETS ${PROJECT_NAME} DESTINATION ${LIBEXEC_DIR})
+INSTALL(TARGETS ${PROJECT_NAME} DESTINATION ${BIN_DIR})

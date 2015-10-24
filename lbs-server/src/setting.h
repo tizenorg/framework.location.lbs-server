@@ -29,7 +29,7 @@
 
 #define NPS_UNIQUE_ID_LEN (20)
 
-//#define NPS_MANAGER_PLUGIN_PATH	"/usr/lib/libSLP-nps-plugin.so"
+/*#define NPS_MANAGER_PLUGIN_PATH	"/usr/lib/libSLP-nps-plugin.so" */
 
 typedef enum {
 	POSITION_OFF = 0,
@@ -45,7 +45,7 @@ int setting_get_double(const char *path, double *val);
 int setting_set_string(const char *path, const char *val);
 char *setting_get_string(const char *path);
 
-typedef void (*key_changed_cb) (keynode_t * key, void *data);
+typedef void (*key_changed_cb)(keynode_t *key, void *data);
 
 int setting_notify_key_changed(const char *path, void *key_changed_cb, void *data);
 int setting_ignore_key_changed(const char *path, void *key_changed_cb);

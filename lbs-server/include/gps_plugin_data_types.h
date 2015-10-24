@@ -66,7 +66,6 @@ typedef enum {
 	GEOFENCE_ERR_UNKNOWN			= -400,
 } geofence_error_t;
 
-
 /**
  * This structure defines the GPS position data.
  */

@@ -2,6 +2,9 @@ CMAKE_MINIMUM_REQUIRED(VERSION 2.0)
 PROJECT(client C)
 
 SET(gps_module "gps")
+SET(nps_module "wps")
+SET(companion_module "companion")
+
 
 SET(CLIENT_SRCS_DIR "${CMAKE_CURRENT_SOURCE_DIR}")
 SET(module_pkgs_LDFLAGS "${module_pkgs_LDFLAGS} -ldl")
@@ -21,6 +24,5 @@ TARGET_LINK_LIBRARIES(${nps_module} ${module_pkgs_LDFLAGS})
 SET_TARGET_PROPERTIES(${nps_module} PROPERTIES VERSION ${FULLVER} SOVERSION ${MAJORVER} CLEAN_DIRECT_OUTPUT 1)
 SET_TARGET_PROPERTIES(${nps_module} PROPERTIES COMPILE_FLAGS ${MODULE_EXTRA_CFLAGS})
 
-INSTALL(TARGETS ${nps_module} DESTINATION /usr/lib/location/module)
+INSTALL(TARGETS ${nps_module} DESTINATION ${LIB_DIR}/location/module)
 ENDIF (ENABLE_WPS)
-

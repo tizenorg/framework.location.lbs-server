@@ -33,8 +33,7 @@
 
 int fd = -1;
 
-struct tm * __get_current_time()
-{
+struct tm *__get_current_time() {
 	time_t now;
 	struct tm *cur_time;
 
@@ -49,7 +48,7 @@ void gps_init_log()
 	int ret = -1;
 	struct tm *cur_time = NULL;
 	char buf[256] = {0, };
-	fd = open(GPG_DUMP_LOG,  O_RDWR | O_APPEND | O_CREAT, 0644);
+	fd = open(GPG_DUMP_LOG, O_RDWR | O_APPEND | O_CREAT, 0644);
 	if (fd < 0) {
 		LOG_GPS(DBG_ERR, "Fail to open file[%s]", GPG_DUMP_LOG);
 		return;
@@ -76,10 +75,9 @@ void gps_deinit_log()
 	struct tm *cur_time = __get_current_time();
 	char buf[256] = {0, };
 
-	if (!cur_time){
+	if (!cur_time) {
 		LOG_GPS(DBG_ERR, "Can't get current time[%s]", GPG_DUMP_LOG);
-	}
-	else {
+	} else {
 		g_snprintf(buf, 256, "[%02d:%02d:%02d] -- END GPS -- \n", cur_time->tm_hour, cur_time->tm_min, cur_time->tm_sec);
 		ret = write(fd, buf, strlen(buf));
 		if (ret == -1) {
@@ -98,9 +96,9 @@ void gps_dump_log(const char *str, const char *app_id)
 	}
 	int ret = -1;
 	char buf[256] = {0, };
-	struct tm* cur_time = __get_current_time();
+	struct tm *cur_time = __get_current_time();
 
-	if (!cur_time){
+	if (!cur_time) {
 		LOG_GPS(DBG_ERR, "Can't get current time[%s]", GPG_DUMP_LOG);
 		return;
 	}

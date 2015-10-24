@@ -94,63 +94,63 @@ static void pdp_proxy_conf()
 	}
 }
 
-void pdp_evt_cb(net_event_info_t * event_cb, void *user_data)
+void pdp_evt_cb(net_event_info_t *event_cb, void *user_data)
 {
 	switch (event_cb->Event) {
-	case NET_EVENT_OPEN_RSP:{
-			LOG_GPS(DBG_LOW, "event_cb->Error : [%d]\n", event_cb->Error);
-			if (get_connection_status() != ACTIVATING) {
-				LOG_GPS(DBG_LOW, "Not Activating status\n");
-			} else if (event_cb->Error == NET_ERR_NONE || event_cb->Error == NET_ERR_ACTIVE_CONNECTION_EXISTS) {
-				LOG_GPS(DBG_LOW, "Successful PDP Activation\n");
-				net_profile_info_t *prof_info = NULL;
-				net_dev_info_t *net_info = NULL;
+		case NET_EVENT_OPEN_RSP: {
+				LOG_GPS(DBG_LOW, "event_cb->Error : [%d]\n", event_cb->Error);
+				if (get_connection_status() != ACTIVATING) {
+					LOG_GPS(DBG_LOW, "Not Activating status\n");
+				} else if (event_cb->Error == NET_ERR_NONE || event_cb->Error == NET_ERR_ACTIVE_CONNECTION_EXISTS) {
+					LOG_GPS(DBG_LOW, "Successful PDP Activation\n");
+					net_profile_info_t *prof_info = NULL;
+					net_dev_info_t *net_info = NULL;
 
-				prof_info = (net_profile_info_t *) event_cb->Data;
-				net_info = &(prof_info->ProfileInfo.Pdp.net_info);
+					prof_info = (net_profile_info_t *) event_cb->Data;
+					net_info = &(prof_info->ProfileInfo.Pdp.net_info);
 
-				strncpy(profile_name, net_info->ProfileName, NET_PROFILE_NAME_LEN_MAX);
+					strncpy(profile_name, net_info->ProfileName, NET_PROFILE_NAME_LEN_MAX);
 
-				set_connection_status(ACTIVATED);
-				pdp_proxy_conf();
+					set_connection_status(ACTIVATED);
+					pdp_proxy_conf();
+					noti_resp_noti(pdp_pipe_fds, TRUE);
+				} else {
+					LOG_GPS(DBG_ERR, " PDP Activation Failed - PDP Error[%d]\n", event_cb->Error);
+					set_connection_status(DEACTIVATED);
+					noti_resp_noti(pdp_pipe_fds, FALSE);
+				}
+			}
+			break;
+
+		case NET_EVENT_CLOSE_RSP:
+			if (get_connection_status() != ACTIVATED && get_connection_status() != DEACTIVATING) {
+				LOG_GPS(DBG_ERR, "Not Activated && Deactivating status\n");
+			} else if (event_cb->Error == NET_ERR_NONE || event_cb->Error == NET_ERR_UNKNOWN) {
+				LOG_GPS(DBG_LOW, "Successful PDP De-Activation\n");
+				set_connection_status(DEACTIVATED);
 				noti_resp_noti(pdp_pipe_fds, TRUE);
 			} else {
-				LOG_GPS(DBG_ERR, " PDP Activation Failed - PDP Error[%d]\n", event_cb->Error);
-				set_connection_status(DEACTIVATED);
+				LOG_GPS(DBG_ERR, " PDP DeActivation Failed - PDP Error[%d]\n", event_cb->Error);
 				noti_resp_noti(pdp_pipe_fds, FALSE);
 			}
-		}
-		break;
+			break;
 
-	case NET_EVENT_CLOSE_RSP:
-		if (get_connection_status() != ACTIVATED && get_connection_status() != DEACTIVATING) {
-			LOG_GPS(DBG_ERR, "Not Activated && Deactivating status\n");
-		} else if (event_cb->Error == NET_ERR_NONE || event_cb->Error == NET_ERR_UNKNOWN) {
-			LOG_GPS(DBG_LOW, "Successful PDP De-Activation\n");
-			set_connection_status(DEACTIVATED);
-			noti_resp_noti(pdp_pipe_fds, TRUE);
-		} else {
-			LOG_GPS(DBG_ERR, " PDP DeActivation Failed - PDP Error[%d]\n", event_cb->Error);
-			noti_resp_noti(pdp_pipe_fds, FALSE);
-		}
-		break;
-
-	case NET_EVENT_CLOSE_IND:
-		if (get_connection_status() != ACTIVATED && get_connection_status() != DEACTIVATING) {
-			LOG_GPS(DBG_ERR, "Not Activated && Deactivating status\n");
-		} else if (event_cb->Error == NET_ERR_NONE || event_cb->Error == NET_ERR_UNKNOWN) {
-			LOG_GPS(DBG_LOW, "Successful PDP De-Activation\n");
-			set_connection_status(DEACTIVATED);
-			noti_resp_noti(pdp_pipe_fds, TRUE);
-		} else {
-			LOG_GPS(DBG_ERR, " PDP DeActivation Failed - PDP Error[%d]\n", event_cb->Error);
-			noti_resp_noti(pdp_pipe_fds, FALSE);
-		}
-		break;
-	case NET_EVENT_OPEN_IND:
-		break;
-	default:
-		break;
+		case NET_EVENT_CLOSE_IND:
+			if (get_connection_status() != ACTIVATED && get_connection_status() != DEACTIVATING) {
+				LOG_GPS(DBG_ERR, "Not Activated && Deactivating status\n");
+			} else if (event_cb->Error == NET_ERR_NONE || event_cb->Error == NET_ERR_UNKNOWN) {
+				LOG_GPS(DBG_LOW, "Successful PDP De-Activation\n");
+				set_connection_status(DEACTIVATED);
+				noti_resp_noti(pdp_pipe_fds, TRUE);
+			} else {
+				LOG_GPS(DBG_ERR, " PDP DeActivation Failed - PDP Error[%d]\n", event_cb->Error);
+				noti_resp_noti(pdp_pipe_fds, FALSE);
+			}
+			break;
+		case NET_EVENT_OPEN_IND:
+			break;
+		default:
+			break;
 	}
 }
 
@@ -159,9 +159,9 @@ unsigned int start_pdp_connection(void)
 	int err = -1;
 
 	set_connection_status(DEACTIVATED);
-	if (noti_resp_init(pdp_pipe_fds))
+	if (noti_resp_init(pdp_pipe_fds)) {
 		LOG_GPS(DBG_LOW, "Success start_pdp_connection\n");
-	else {
+	} else {
 		LOG_GPS(DBG_ERR, "ERROR in noti_resp_init()\n");
 		return FALSE;
 	}
@@ -185,10 +185,11 @@ unsigned int start_pdp_connection(void)
 		LOG_GPS(DBG_WARN, "Error in net_open_connection_with_preference() [%d]\n", err);
 		set_connection_status(DEACTIVATED);
 		err = net_deregister_client();
-		if (err == NET_ERR_NONE)
+		if (err == NET_ERR_NONE) {
 			LOG_GPS(DBG_LOW, "Client deregistered successfully\n");
-		else
+		} else {
 			LOG_GPS(DBG_ERR, "Error deregistering the client\n");
+		}
 		noti_resp_deinit(pdp_pipe_fds);
 		return FALSE;
 	}
@@ -233,9 +234,9 @@ unsigned int stop_pdp_connection(void)
 		return TRUE;
 	}
 
-	if (noti_resp_init(pdp_pipe_fds))
+	if (noti_resp_init(pdp_pipe_fds)) {
 		LOG_GPS(DBG_LOW, "Success stop_pdp_connection\n");
-	else {
+	} else {
 		LOG_GPS(DBG_ERR, "ERROR in noti_resp_init()\n");
 		return FALSE;
 	}
@@ -251,10 +252,11 @@ unsigned int stop_pdp_connection(void)
 		return FALSE;
 	}
 	if (noti_resp_wait(pdp_pipe_fds) > 0) {
-		if (noti_resp_check(pdp_pipe_fds))
+		if (noti_resp_check(pdp_pipe_fds)) {
 			LOG_GPS(DBG_LOW, "Close Connection success\n");
-		else
+		} else {
 			LOG_GPS(DBG_ERR, "Close connection failed\n");
+		}
 	}
 
 	noti_resp_deinit(pdp_pipe_fds);
@@ -275,7 +277,7 @@ unsigned int stop_pdp_connection(void)
 unsigned int query_dns(char *pdns_lookup_addr, unsigned int *ipaddr, int *port)
 {
 	FUNC_ENTRANCE_SERVER;
-	//int dns_id;
+	/*int dns_id; */
 	unsigned int ret = 0;
 	struct hostent *he;
 
@@ -307,10 +309,11 @@ unsigned int query_dns(char *pdns_lookup_addr, unsigned int *ipaddr, int *port)
 
 int noti_resp_init(int *noti_pipe_fds)
 {
-	if (pipe(noti_pipe_fds) < 0)
+	if (pipe(noti_pipe_fds) < 0) {
 		return 0;
-	else
+	} else {
 		return 1;
+	}
 }
 
 int noti_resp_wait(int *noti_pipe_fds)
@@ -343,12 +346,14 @@ int noti_resp_deinit(int *noti_pipe_fds)
 {
 	int err;
 	err = close(*noti_pipe_fds);
-	if (err != 0)
+	if (err != 0) {
 		LOG_GPS(DBG_ERR, "ERROR closing fds1.\n");
+	}
 
 	err = close(*(noti_pipe_fds + 1));
-	if (err != 0)
+	if (err != 0) {
 		LOG_GPS(DBG_ERR, "ERROR closing fds2.\n");
+	}
 
 	return err;
 }

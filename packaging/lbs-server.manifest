@@ -4,39 +4,50 @@
 		<provide>
 			<label name="location_fw::server" />
 			<label name="location_fw::client" />
-			<label name="location_fw::db" />
-			<label name="location_fw::vconf" />
-			<label name="location_fw::maps" />
+			<label name="location_fw::geofence" />
 		</provide>
 		<request>
 			<smack request="sys-assert::core" type="rwxat"/>
-			<smack request="system::use_internet" type="rwx"/>
-			<smack request="Odnp::dbus-access" type="rw"/>
-			<smack request="Odnp::dbus-access-gw" type="rw"/>
+			<smack request="connman" type="rw"/>
+			<smack request="net-config" type="rw"/>
 			<smack request="deviced::display" type="rw"/>
 			<smack request="device::app_logging" type="w"/>
 			<smack request="device::sys_logging" type="w"/>
-			<smack request="connman" type="rw"/>
-			<smack request="net-config" type="rw"/>
-			<smack request="location_fw::client" type="rw" />
+			<smack request="system::sys_logging" type="x"/>
+			<smack request="system::use_internet" type="rwx"/>
+			<smack request="system::media" type="rwx" />
 			<smack request="telephony_framework::api_gps" type="rw" />
 			<smack request="telephony_framework::api_sim" type="r" />
-			<smack request="system::vconf_setting" type="r" />
-			<smack request="system::vconf" type="r" />
 			<smack request="telephony_framework::properties" type="rw"/>
-			<smack request="location_fw::vconf" type="rwx"/>
+			<smack request="telephony_framework::api_ps_public" type="r" />
+			<smack request="location_fw::client" type="rw" />
 			<smack request="location_fw::server" type="r"/>
+			<smack request="location_fw::geofence" type="rw"/>
+			<smack request="tizen::vconf::public::r" type="rxl"/>
+			<smack request="tizen::vconf::public::r::platform::rw" type="rw"/>
+			<smack request="tizen::vconf::platform::rw" type="rw"/>
+			<smack request="tizen::vconf::location" type="rw"/>
+			<smack request="tizen::vconf::location::enable" type="rw"/>
+			<smack request="Odnp::dbus-access" type="rw"/>
+			<smack request="Odnp::dbus-access-gw" type="rw"/>
+			<smack request="Odnp::odnpconfs" type="rx" />
+			<smack request="Odnp::nlpconfs" type="rx" />
+			<smack request="Odnp::log" type="rwx" />
+			<smack request="brcm_daemon" type="rwxat"/>
+			<smack request="syslogd" type="w"/>
 		</request>
 		<permit>
 			<smack permit="system::use_internet" type="rwx"/>
 			<smack permit="sdbd" type="rx"/>
+			<smack permit="brcm_daemon" type="rwxat"/>
+			<smack permit="telephony_framework" type="rw"/>
 		</permit>
 	</define>
 	<assign>
-		<filesystem path="/usr/share/dbus-1/services/org.tizen.lbs.Providers.LbsServer.service" label="_" />
-		<filesystem path="/usr/share/lbs/lbs-server.provider" label="location_fw::server" />
+		<filesystem path="/usr/share/dbus-1/system-services/org.tizen.lbs.Providers.LbsServer.service" label="_" />
 		<filesystem path="/etc/rc.d/init.d/lbs-server" label="_" exec_label="none" />
 		<filesystem path="/etc/rc.d/rc5.d/S90lbs-server" label="_" exec_label="none" />
+		<filesystem path="/usr/bin/lbs-server" label="_" exec_label="location_fw" />
 		<dbus name="org.tizen.lbs.Providers.LbsServer" own="location_fw" bus="system">
 			<node name="/org/tizen/lbs/Providers/LbsServer">
 				<interface name="org.tizen.lbs.Manager">

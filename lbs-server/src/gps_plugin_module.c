@@ -42,16 +42,16 @@ int load_plugin_module(char *specific_name, void **plugin_handle)
 		strncpy(plugin_path, GPS_PLUGIN_PATH, sizeof(plugin_path));
 	} else {
 		snprintf(plugin_path, sizeof(plugin_path),
-			 SPECIFIC_PLUGIN_PATH_PREFIX
-			 "%s"
-			 SPECIFIC_PLUGIN_PATH_POSTFIX,
-			 specific_name);
+				SPECIFIC_PLUGIN_PATH_PREFIX"%s"
+				SPECIFIC_PLUGIN_PATH_POSTFIX,
+				specific_name);
 
 		struct stat st = {0};
 
 		if (stat(plugin_path, &st) != 0) {
 			strncpy(plugin_path, GPS_PLUGIN_PATH, sizeof(plugin_path));
-			setting_set_int(VCONFKEY_LOCATION_REPLAY_ENABLED, 1);
+			/* To support real GPS when additional plugin is added*/
+			/* setting_set_int(VCONFKEY_LOCATION_REPLAY_ENABLED, 1); */
 		}
 	}
 
@@ -62,7 +62,7 @@ int load_plugin_module(char *specific_name, void **plugin_handle)
 		return FALSE;
 	}
 
-	const gps_plugin_interface *(*get_gps_plugin_interface) ();
+	const gps_plugin_interface *(*get_gps_plugin_interface)();
 	get_gps_plugin_interface = dlsym(*plugin_handle, "get_gps_plugin_interface");
 	if (!get_gps_plugin_interface) {
 		LOG_GPS(DBG_ERR, "Failed to find entry symbol in plugin module.");

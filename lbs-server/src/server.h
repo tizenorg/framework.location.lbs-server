@@ -27,7 +27,7 @@
 #define SUPL_SERVER_URL_DEFAULT "your.supl-server.com"
 #define SUPL_SERVER_PORT_DEFAULT 7275
 
-//This structure must be synchronized with State of mctxlDef.h
+/*This structure must be synchronized with State of mctxlDef.h */
 typedef enum {
 	GPS_STATE_AVAILABLE,
 	GPS_STATE_OUT_OF_SERVICE,
@@ -84,5 +84,7 @@ int request_delete_geofence(int fence_id);
 int request_pause_geofence(int fence_id);
 int request_resume_geofence(int fence_id, int monitor_states);
 int request_delete_gps_data(void);
+
+int get_nmea_from_server(int *timestamp, char **nmea_data);
 
 #endif				/* _SERVER_H_ */
